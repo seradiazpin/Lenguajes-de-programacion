@@ -1,0 +1,2 @@
+si ( a < 5 && a>0 ) entonces
+fin_si

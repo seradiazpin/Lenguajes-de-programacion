@@ -1,0 +1,5 @@
+  si ( (a < 5) && (a>10) ) entonces
+        imprimir(a);       
+   si_no
+        imprimir(a-1);   
+    fin_si

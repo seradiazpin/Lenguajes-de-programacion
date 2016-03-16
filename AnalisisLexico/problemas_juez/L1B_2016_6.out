@@ -1,0 +1,12 @@
+<si,1,1>
+<tk_par_izq,1,4>
+<id,a,1,6>
+<tk_menor,1,8>
+<tk_entero,5,1,10>
+<tk_y,1,12>
+<id,a,1,15>
+<tk_mayor,1,16>
+<tk_entero,0,1,17>
+<tk_par_der,1,19>
+<entonces,1,21>
+<fin_si,2,1>

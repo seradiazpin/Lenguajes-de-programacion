@@ -1,0 +1,15 @@
+<funcion,4,1>
+<entero,4,9>
+<id,sum,4,16>
+<tk_par_izq,4,19>
+<entero,4,20>
+<id,a,4,27>
+<tk_coma,4,28>
+<entero,4,30>
+<id,b,4,37>
+<tk_par_der,4,38>
+<hacer,4,40>
+<retornar,5,5>
+<id,a,5,14>
+<tk_mas,5,16>
+>>> Error lexico(linea: 5, posicion: 18)

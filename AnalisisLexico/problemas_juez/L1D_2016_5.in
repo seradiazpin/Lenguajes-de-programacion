@@ -1,0 +1,86 @@
+//Estructura
+//Conceptos Basicos
+
+estructura Fecha
+    entero dd;
+    entero mm;
+    entero aa;
+fin_estructura
+
+estructura Estudiante
+    cadena cedula;
+    cadena nombre;
+    entero edad;
+    real definitiva;
+    Fecha fingreso;
+fin_estructura
+
+funcion_principal
+    Estudiante estudiante;
+    entero opcion;
+
+    hacer
+        opcion = menu();
+        seleccionar ( opcion ) entre
+           caso 1 : estudiante = capturar(estudiante);
+                    romper;
+           caso 2 : mostrar(estudiante);
+                    romper;
+           caso 3 : romper;
+           defecto :imprimir("Digite una opcion entre 1 y 3 ");
+                    romper;
+       fin_seleccionar
+    mientras ( opcion != 3) ;
+fin_principal
+
+funcion entero menu() hacer
+    entero opcion;
+    imprimir("menu de estructuras ");
+    imprimir("1  Capturar el registro ");
+    imprimir(" 2 Imprimir el registro ");
+    imprimir(" 3  Salir ");
+    imprimir(" digite su opcion entre 1 y 3  ");
+    leer (opcion);
+    retornar opcion;
+fin_funcion
+
+funcion Estudiante capturar(Estudiante estudiante) hacer
+  entero i;
+  real def = 0.0;
+  imprimir("digite la cedula del estudiante  ");
+  leer(estudiante.cedula);
+  imprimir("digite el nombre del estudiante ");
+  leer(estudiante.nombre);
+
+  para(i=0; i<3; 1) hacer
+    imprimir ("digite la nota ",i+1, " del estudiante");
+    leer(estudiante.nota);
+    def = def + estudiante.nota;
+  fin_para
+
+  imprimir("digite la edad del estudiante ");
+  leer(estudiante.edad);
+  estudiante.definitiva = def / 3;
+
+  imprimir("digite el dia de ingreso a la Universidad ");
+  leer(estudiante.fingreso.dd);
+  imprimir("digite el mes de ingreso a la Universidad  ");
+  leer(estudiante.fingreso.mm)
+  imprimir("digite el ako de ingreso a la Universidad  ");
+  leer(estudiante.fingreso.aa);
+  retornar estudiante;
+fin_funcion
+
+funcion mostrar(Estudiante estudiante) hacer
+  entero i;
+  imprimir("");
+  imprimir("Cedula  ", estudiante.cedula);
+  imprimir("Nombre  ", estudiante.nombre,"");
+  para (i=0; i<3; 1) hacer
+    imprimir("Nota ",estudiante.nota, " ");
+  fin_para
+  imprimir("Edad  ",estudiante.edad);
+  imprimir("Definitiva  ",estudiante.definitiva);
+  imprimir("Fecha de Ingreso ddmmaaaa  ",estudiante.fingreso.dd,estudiante.fingreso.mm,estudiante.fingreso.aa);
+fin_funcion
+

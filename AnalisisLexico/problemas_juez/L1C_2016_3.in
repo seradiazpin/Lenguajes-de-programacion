@@ -1,0 +1,6 @@
+funcion_principal
+    entero a = 3;
+    hacer
+        a = a/2;
+    mientras( a > 0 );
+fin_principal

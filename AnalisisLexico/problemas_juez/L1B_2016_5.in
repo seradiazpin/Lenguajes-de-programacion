@@ -1,0 +1,13 @@
+funcion_principal
+    booleano flag;
+    leer(flag);
+    imprimir(flag);
+    caracter letter = 'x';
+    leer(letter);entero count = 7;imprimir( "letter ",letter);
+    real mean;
+    cadena name = "Lenguajes de programacion";
+    entero x,y=1,z=0;
+    imprimir( "letter ",letter, " operation ", ((x + y * z - 30 + 2.1.1) / mean%3));
+    leer(x);leer(y);leer(z);
+    imprimir("");
+fin_principal

@@ -1,0 +1,8 @@
+funcion_principal
+    booleano verdadero
+    caracter
+    entero
+    real
+    cadena
+    entero
+fin_principal

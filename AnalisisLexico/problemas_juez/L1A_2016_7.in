@@ -1,0 +1,23 @@
+funcion_principal
+fin_principal leer
+imprimir
+
+booleano
+caracter
+entero
+real
+cadena si         entonces
+fin_si
+si_no
+mientras
+hacer
+fin_mientras                        para
+fin_para
+seleccionar          entre
+caso romper
+defecto fin_seleccionar
+estructura
+fin_estructura
+funcion
+fin_funcion retornar falso
+verdadero
