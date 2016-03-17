@@ -50,13 +50,13 @@ class DictionaryRegExp:
 
     simple_token = {"+": "tk_mas", "-": "tk_menos", "*": "tk_mult", "/": "tk_div", "%": "tk_mod", "=": "tk_asig", "<" : "tk_menor", ">": "tk_mayor", "@": "tk_menor_igual",
                     "?": "tk_mayor_igual", "$": "tk_igual",  "|": "tk_o", "\\": "tk_diff", "!": "tk_neg", ":": "tk_dosp", ";": "tk_pyc", "(": "tk_par_izq", ")": "tk_par_der",
-                    ".": "tk_punto", "&": "tk_y"}
+                    ".": "tk_punto", "&": "tk_y",",":"tk_coma"}
     compound_token = {"funcion_principal": "funcion_principal", "fin_principal": "fin_principal", "funcion": "funcion", "entero": "entero", "caracter": "caracter", "real": "real",
                       "booleano": "booleano", "cadena": "cadena", "imprimir" : "imprimir", "retornar": "retornar", "estructura": "estructura", "fin_estructura": "fin_estructura",
                       "leer": "leer", "si": "si", "entonces": "entonces", "fin_si": "fin_si", "si_no": "si_no", "mientras": "mientras", "hacer": "hacer", "fin_mientras": "fin_mientras",
                       "para": "para", "fin_para": "fin_para", "seleccionar": "seleccionar", "entre": "entre", "caso": "caso", "romper": "romper", "defecto": "defecto",
-                      "fin_seleccionar": "fin_seleccionar"}
-    lex_token = {"-?\d+":"tk_entero", "-?\d+\.\d+": "tk_real", "\".*\"": "tk_cadena", "\'(.| )\'": "tk_caracter", "verdadero|falso": "tk_booleano", "[a-zA-Z][\w_-]*": "tk_id"}
+                      "fin_seleccionar": "fin_seleccionar", "verdadero":"verdadero", "falso":"falso", "fin_funcion":"fin_funcion"}
+    lex_token = {"-?\d+":"tk_entero", "-?\d+\.\d+": "tk_real", "\".*\"": "tk_cadena", "\'(.| )\'": "tk_caracter", "[a-zA-Z][\w_-]*": "id"}
     TOKEN = 0
     LEX_TOKEN = 1
     MAX_SIZE_SIMPLE_TOKEN = 2
@@ -69,13 +69,9 @@ class DictionaryRegExp:
         self.STRING = False;
         self.COMMENT = False;
 
-    def preprocess_token(self, token):
-        tok = token[self.TOKEN]
-        if(tok == "tk_caracter"):
-            tok.lexer = tok.lexer.replace("'", "")
-        if(tok.token == "tk_cadena"):
-            tok.lexer = tok.lexer.replace("\"", "")
-        return (tok, token[self.LEX_TOKEN])
+
+        self.tokens = []
+
 
     def get_simple_token(self):
         backwards = 2
@@ -143,10 +139,11 @@ class DictionaryRegExp:
                     self.start_column_lexer = self.proc_prog.current_column
                     continue # todo
 
-                result1 = self.preprocess_token(result)
+
 
                 if not self.COMMENT:
-                    print result1[self.TOKEN]
+                    print result[self.TOKEN]
+                    self.tokens.append(str(result[self.TOKEN])+"\n")
 
                 if(result[self.LEX_TOKEN]):
                     proc_prog.backward()
@@ -186,18 +183,45 @@ class LexicalError:
     def __str__(self):
         return "Error lexico (linea: " + str(self.line) + ", posicion: " + str(self.column) + ")"
 
+
+def read_file(file_name):
+    lines = []
+    file_data = open(file_name, "r")
+    for line in file_data:
+        lines.append(line)
+    lines[len(lines)-1] += "\n"
+
+    for i in range(len(lines)):
+        lines[i] = lines[i].replace("\r","")
+    return lines
+
+n = 7
+l = "A"
+file_init = "./problemas_juez/L1"+l+"_2016_"+str(n)
+
 program = []
-file = open("program.txt", "r")
-for line in file:
-    program.append(line)
 
-program[len(program)-1] += "\n"
+program = read_file(file_init+".in")
 
-#program = ["funcion_principal\n", "imprimir(3<=5)\n", "fin_principal \n", "+\n"]
 transform(program)
-#print "\n".join(program)
 
 proc_prog = Process_program(program)
-DictionaryRegExp(proc_prog).get_tokens()
+a = DictionaryRegExp(proc_prog)
+a.get_tokens()
+tokens_list = a.tokens
+print "----------------SOLUCION----------------------------"
+out = read_file(file_init+".out")
+out[len(out)-1] = out[len(out)-1].replace("\n\n","\n")
+#print "".join(out)
+
+print "----------------Assert----------------------------"
+
+for i in range(len(tokens_list)):
+    try:
+        assert out[i] == tokens_list[i]
+    except AssertionError:
+        print ">>> Error " + tokens_list[i]+" != "+out[i]
+
+
 
 
