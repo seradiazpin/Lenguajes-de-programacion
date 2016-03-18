@@ -56,7 +56,7 @@ class DictionaryRegExp:
                       "leer": "leer", "si": "si", "entonces": "entonces", "fin_si": "fin_si", "si_no": "si_no", "mientras": "mientras", "hacer": "hacer", "fin_mientras": "fin_mientras",
                       "para": "para", "fin_para": "fin_para", "seleccionar": "seleccionar", "entre": "entre", "caso": "caso", "romper": "romper", "defecto": "defecto",
                       "fin_seleccionar": "fin_seleccionar", "verdadero":"verdadero", "falso":"falso", "fin_funcion":"fin_funcion"}
-    lex_token = {"-?\d+":"tk_entero", "-?\d+\.\d+": "tk_real", "\".*\"": "tk_cadena", "\'.\'": "tk_caracter", "[a-zA-Z][\w_-]*": "id"}
+    lex_token = {"-?\d+":"tk_entero", "-?\d+\.\d+": "tk_real", "\".*\"": "tk_cadena", "\'.{0,1}\'": "tk_caracter", "[a-zA-Z][\w_-]*": "id"}
     TOKEN = 0
     LEX_TOKEN = 1
     MAX_SIZE_SIMPLE_TOKEN = 2
@@ -70,6 +70,7 @@ class DictionaryRegExp:
         self.COMMENT = False
         self.CHAR = False
         self.STREND = False
+        self.CHREND = False
 
 
         self.tokens = []
@@ -99,6 +100,7 @@ class DictionaryRegExp:
     def get_tokens(self):
         tokens = []
         end_tokens = [" ", "\n", "\t"]
+        special_case = ["\"", "\'"]
         while(not self.proc_prog.end()):
             char = self.proc_prog.forward()
             simple_token = ""
@@ -130,9 +132,14 @@ class DictionaryRegExp:
             #char mode
             if char == '\'' or self.CHAR:
                 if char == '\'':
+                    if self.CHAR:
+                        self.CHREND = True
                     self.CHAR = not self.CHAR
-                self.current_lexer += char
-                continue
+                if not self.CHREND:
+                    self.current_lexer += char
+                    continue
+                else:
+                    self.current_lexer += char
 
             # comment mode
             if char == '{':
@@ -140,7 +147,7 @@ class DictionaryRegExp:
                 self.current_lexer = ""
                 continue
 
-            if(char in end_tokens or char in self.simple_token or char =="\""):
+            if char in end_tokens or char in self.simple_token or char in special_case:
 
                 if not self.COMMENT:
                     try:
@@ -154,16 +161,15 @@ class DictionaryRegExp:
                     self.start_column_lexer = self.proc_prog.current_column
                     continue # todo
 
-
-
                 if not self.COMMENT:
                     print result[self.TOKEN]
                     self.tokens.append(str(result[self.TOKEN])+"\n")
 
-                if result[self.LEX_TOKEN] and not self.STREND:
+                if result[self.LEX_TOKEN] and not self.STREND and not self.CHREND:
                     proc_prog.backward()
                 else:
                     self.STREND = False
+                    self.CHREND = False
 
                 self.start_line_lexer = self.proc_prog.current_line
                 self.start_column_lexer = self.proc_prog.current_column
@@ -214,7 +220,7 @@ def read_file(file_name):
     return lines
 
 n = 4
-l = "C"
+l = "A"
 file_init = "./problemas_juez/L1"+l+"_2016_"+str(n)
 
 program = []
