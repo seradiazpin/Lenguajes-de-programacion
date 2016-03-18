@@ -49,7 +49,7 @@ class DictionaryRegExp:
 
 
     simple_token = {"+": "tk_mas", "-": "tk_menos", "*": "tk_mult", "/": "tk_div", "%": "tk_mod", "=": "tk_asig", "<" : "tk_menor", ">": "tk_mayor", "@": "tk_menor_igual",
-                    "?": "tk_mayor_igual", "$": "tk_igual",  "|": "tk_o", "\\": "tk_diff", "!": "tk_neg", ":": "tk_dosp", ";": "tk_pyc", "(": "tk_par_izq", ")": "tk_par_der",
+                    "?": "tk_mayor_igual", "$": "tk_igual",  "|": "tk_o", "\\": "tk_dif", "!": "tk_neg", ":": "tk_dosp", ";": "tk_pyc", "(": "tk_par_izq", ")": "tk_par_der",
                     ".": "tk_punto", "&": "tk_y",",":"tk_coma"}
     compound_token = {"funcion_principal": "funcion_principal", "fin_principal": "fin_principal", "funcion": "funcion", "entero": "entero", "caracter": "caracter", "real": "real",
                       "booleano": "booleano", "cadena": "cadena", "imprimir" : "imprimir", "retornar": "retornar", "estructura": "estructura", "fin_estructura": "fin_estructura",
@@ -219,8 +219,8 @@ def read_file(file_name):
         lines[i] = lines[i].replace("\r","")
     return lines
 
-n = 4
-l = "A"
+n = 5
+l = "D"
 file_init = "./problemas_juez/L1"+l+"_2016_"+str(n)
 
 program = []
