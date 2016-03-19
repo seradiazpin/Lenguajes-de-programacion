@@ -2,7 +2,9 @@ import re
 
 # Transformations
 
-transformations = {">=": "? ", "<=": "@ ", "==": "$ ", "!=": "\\ ", "&&": "& ", "||": "| ", "//": '# ', "/*": '{ ', "*/": '{ '}
+transformations = {">=": "? ", "<=": "@ ", "==": "$ ", "!=": "\\ ", "&&": "& ", "||": "| ",
+                   "//": '# ', "/*": '{ ', "*/": '{ '}
+
 
 class Token:
     def __init__(self, token, line, column, lexer=""):
@@ -14,7 +16,8 @@ class Token:
     def __str__(self):
         return "<" + self.token + "," + ("" if self.lexer == "" else self.lexer + ",") + str(self.line) + "," + str(self.column) + ">"
 
-class Process_program:
+
+class ProcessProgram:
     def __init__(self, program):
         self.current_line = 0
         self.current_column = 0
@@ -28,9 +31,9 @@ class Process_program:
         self.current_column = 0
 
     def forward(self):
-        #print self.current_line, self.current_column
+        # print self.current_line, self.current_column
         char = self.current_char()
-        if(char == "\n"):
+        if char == "\n":
             self.current_line += 1
             self.current_column = 0
         else:
@@ -47,16 +50,22 @@ class Process_program:
 
 class DictionaryRegExp:
 
+    simple_token = {"+": "tk_mas", "-": "tk_menos", "*": "tk_mult", "/": "tk_div", "%": "tk_mod", "=": "tk_asig",
+                    "<": "tk_menor", ">": "tk_mayor", "@": "tk_menor_igual", "?": "tk_mayor_igual", "$": "tk_igual",
+                    "|": "tk_o", "\\": "tk_dif", "!": "tk_neg", ":": "tk_dosp", ";": "tk_pyc", "(": "tk_par_izq",
+                    ")": "tk_par_der", ".": "tk_punto", "&": "tk_y", ",": "tk_coma"}
+    compound_token = {"funcion_principal": "funcion_principal", "fin_principal": "fin_principal", "funcion": "funcion",
+                      "entero": "entero", "caracter": "caracter", "real": "real", "booleano": "booleano",
+                      "cadena": "cadena", "imprimir": "imprimir", "retornar": "retornar", "estructura": "estructura",
+                      "fin_estructura": "fin_estructura", "leer": "leer", "si": "si", "entonces": "entonces",
+                      "fin_si": "fin_si", "si_no": "si_no", "mientras": "mientras", "hacer": "hacer",
+                      "fin_mientras": "fin_mientras", "para": "para", "fin_para": "fin_para",
+                      "seleccionar": "seleccionar", "entre": "entre", "caso": "caso", "romper": "romper",
+                      "defecto": "defecto", "fin_seleccionar": "fin_seleccionar", "verdadero": "verdadero",
+                      "falso": "falso", "fin_funcion": "fin_funcion"}
 
-    simple_token = {"+": "tk_mas", "-": "tk_menos", "*": "tk_mult", "/": "tk_div", "%": "tk_mod", "=": "tk_asig", "<" : "tk_menor", ">": "tk_mayor", "@": "tk_menor_igual",
-                    "?": "tk_mayor_igual", "$": "tk_igual",  "|": "tk_o", "\\": "tk_dif", "!": "tk_neg", ":": "tk_dosp", ";": "tk_pyc", "(": "tk_par_izq", ")": "tk_par_der",
-                    ".": "tk_punto", "&": "tk_y",",":"tk_coma"}
-    compound_token = {"funcion_principal": "funcion_principal", "fin_principal": "fin_principal", "funcion": "funcion", "entero": "entero", "caracter": "caracter", "real": "real",
-                      "booleano": "booleano", "cadena": "cadena", "imprimir" : "imprimir", "retornar": "retornar", "estructura": "estructura", "fin_estructura": "fin_estructura",
-                      "leer": "leer", "si": "si", "entonces": "entonces", "fin_si": "fin_si", "si_no": "si_no", "mientras": "mientras", "hacer": "hacer", "fin_mientras": "fin_mientras",
-                      "para": "para", "fin_para": "fin_para", "seleccionar": "seleccionar", "entre": "entre", "caso": "caso", "romper": "romper", "defecto": "defecto",
-                      "fin_seleccionar": "fin_seleccionar", "verdadero":"verdadero", "falso":"falso", "fin_funcion":"fin_funcion"}
-    lex_token = {"-?\d+":"tk_entero", "-?\d+\.\d+": "tk_real", "\".*\"": "tk_cadena", "\'.{0,1}\'": "tk_caracter", "[a-zA-Z][\w_-]*": "id"}
+    lex_token = {"-?\d+": "tk_entero", "-?\d+\.\d+": "tk_real", "\".*\"": "tk_cadena", "\'.{0,1}\'": "tk_caracter",
+                 "[a-zA-Z][\w_-]*": "id"}
     TOKEN = 0
     LEX_TOKEN = 1
     MAX_SIZE_SIMPLE_TOKEN = 2
@@ -72,9 +81,7 @@ class DictionaryRegExp:
         self.STREND = False
         self.CHREND = False
 
-
         self.tokens = []
-
 
     def get_simple_token(self):
         backwards = 2
@@ -92,18 +99,15 @@ class DictionaryRegExp:
         for i in range(backwards):
             self.proc_prog.backward()
 
-
-        #print "token", token
+        # print "token", token
         return token if check else ""
 
-
     def get_tokens(self):
-        tokens = []
         end_tokens = [" ", "\n", "\t"]
         special_case = ["\"", "\'"]
-        while(not self.proc_prog.end()):
+
+        while not self.proc_prog.end():
             char = self.proc_prog.forward()
-            simple_token = ""
 
             if self.current_lexer == "" and char in self.simple_token:
                 self.current_lexer = char
@@ -115,7 +119,6 @@ class DictionaryRegExp:
                 self.start_column_lexer = self.proc_prog.current_column
                 self.current_lexer = ""
                 continue
-
 
             # string mode
             if char == '\"' or self.STRING:
@@ -129,7 +132,7 @@ class DictionaryRegExp:
                 else:
                     self.current_lexer += char
 
-            #char mode
+            # char mode
             if char == '\'' or self.CHAR:
                 if char == '\'':
                     if self.CHAR:
@@ -147,6 +150,14 @@ class DictionaryRegExp:
                 self.current_lexer = ""
                 continue
 
+            try:
+                if (type(int(self.current_lexer)) is int) and char == '.':
+                    self.current_lexer += char
+                    continue
+            except ValueError:
+                # print ">>> Not number"
+                None
+
             if char in end_tokens or char in self.simple_token or char in special_case:
 
                 if not self.COMMENT:
@@ -156,10 +167,10 @@ class DictionaryRegExp:
                         print ">>> " + str(e)
                         return
 
-                if result == False:
+                if not result:
                     self.start_line_lexer = self.proc_prog.current_line
                     self.start_column_lexer = self.proc_prog.current_column
-                    continue # todo
+                    continue
 
                 if not self.COMMENT:
                     print result[self.TOKEN]
@@ -181,15 +192,16 @@ class DictionaryRegExp:
         if self.current_lexer == "":
             return False
         if self.current_lexer in self.simple_token.keys():
-            return (Token(self.simple_token[self.current_lexer], self.start_line_lexer, self.start_column_lexer), False)
+            return Token(self.simple_token[self.current_lexer], self.start_line_lexer, self.start_column_lexer), False
         if self.current_lexer in self.compound_token.keys():
-            return (Token(self.compound_token[self.current_lexer], self.start_line_lexer, self.start_column_lexer), True)
+            return Token(self.compound_token[self.current_lexer], self.start_line_lexer, self.start_column_lexer), True
         for regexp in self.lex_token.keys():
             pattern = re.compile(regexp)
             if pattern.match(self.current_lexer):
-                return (Token(self.lex_token[regexp], self.start_line_lexer, self.start_column_lexer, self.current_lexer), True)
+                return Token(self.lex_token[regexp], self.start_line_lexer, self.start_column_lexer, self.current_lexer), True
 
         raise LexicalError(self.start_line_lexer, self.start_column_lexer)
+
 
 def transform(program):
 
@@ -198,6 +210,7 @@ def transform(program):
         # special cases
         for key in keys:
             program[i] = program[i].replace(key, transformations[key])
+
 
 class LexicalError:
     def __init__(self, line, column):
@@ -216,11 +229,12 @@ def read_file(file_name):
     lines[len(lines)-1] += "\n"
 
     for i in range(len(lines)):
-        lines[i] = lines[i].replace("\r","")
+        lines[i] = lines[i].replace("\r", "")
     return lines
 
-n = 5
-l = "D"
+# Cambiar n para el numero y l para la letra de los casos de prueba
+n = 2
+l = "E"
 file_init = "./problemas_juez/L1"+l+"_2016_"+str(n)
 
 program = []
@@ -229,14 +243,14 @@ program = read_file(file_init+".in")
 
 transform(program)
 
-proc_prog = Process_program(program)
+proc_prog = ProcessProgram(program)
 a = DictionaryRegExp(proc_prog)
 a.get_tokens()
 tokens_list = a.tokens
 print "----------------SOLUCION----------------------------"
 out = read_file(file_init+".out")
-out[len(out)-1] = out[len(out)-1].replace("\n\n","\n")
-#print "".join(out)
+out[len(out)-1] = out[len(out)-1].replace("\n\n", "\n")
+# print "".join(out)
 
 print "----------------Assert----------------------------"
 
@@ -245,7 +259,3 @@ for i in range(len(tokens_list)):
         assert out[i] == tokens_list[i]
     except AssertionError:
         print ">>> Error " + tokens_list[i]+" != "+out[i]+" >>Linea "+str(i+1)
-
-
-
-
