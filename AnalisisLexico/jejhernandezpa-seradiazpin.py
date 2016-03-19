@@ -108,7 +108,6 @@ class DictionaryRegExp:
 
         while not self.proc_prog.end():
             char = self.proc_prog.forward()
-
             if self.current_lexer == "" and char in self.simple_token:
                 self.current_lexer = char
 
@@ -167,20 +166,22 @@ class DictionaryRegExp:
                         print ">>> " + str(e)
                         return
 
-                if not result:
-                    self.start_line_lexer = self.proc_prog.current_line
-                    self.start_column_lexer = self.proc_prog.current_column
-                    continue
+                if not self.COMMENT:
+                    if not result:
+                        self.start_line_lexer = self.proc_prog.current_line
+                        self.start_column_lexer = self.proc_prog.current_column
+                        continue
 
                 if not self.COMMENT:
                     print result[self.TOKEN]
                     self.tokens.append(str(result[self.TOKEN])+"\n")
 
-                if result[self.LEX_TOKEN] and not self.STREND and not self.CHREND:
-                    proc_prog.backward()
-                else:
-                    self.STREND = False
-                    self.CHREND = False
+                if not self.COMMENT:
+                    if result[self.LEX_TOKEN] and not self.STREND and not self.CHREND:
+                        proc_prog.backward()
+                    else:
+                        self.STREND = False
+                        self.CHREND = False
 
                 self.start_line_lexer = self.proc_prog.current_line
                 self.start_column_lexer = self.proc_prog.current_column
@@ -233,7 +234,7 @@ def read_file(file_name):
     return lines
 
 # Cambiar n para el numero y l para la letra de los casos de prueba
-n = 2
+n = 4
 l = "E"
 file_init = "./problemas_juez/L1"+l+"_2016_"+str(n)
 
@@ -242,7 +243,6 @@ program = []
 program = read_file(file_init+".in")
 
 transform(program)
-
 proc_prog = ProcessProgram(program)
 a = DictionaryRegExp(proc_prog)
 a.get_tokens()
