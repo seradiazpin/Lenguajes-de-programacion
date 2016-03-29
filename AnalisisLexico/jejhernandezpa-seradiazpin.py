@@ -80,7 +80,7 @@ class DictionaryRegExp:
         self.CHAR = False
         self.STREND = False
         self.CHREND = False
-
+        self.tokens_val = []
         self.tokens = []
 
     def get_simple_token(self):
@@ -173,8 +173,9 @@ class DictionaryRegExp:
                         continue
 
                 if not self.COMMENT:
-                    print result[self.TOKEN]
-                    self.tokens.append(str(result[self.TOKEN])+"\n")
+                    #print result[self.TOKEN]
+                    self.tokens_val.append(str(result[self.TOKEN])+"\n")
+                    self.tokens.append(result[self.TOKEN])
 
                 if not self.COMMENT:
                     if result[self.LEX_TOKEN] and not self.STREND and not self.CHREND:
@@ -188,6 +189,8 @@ class DictionaryRegExp:
                 self.current_lexer = ""
             else:
                 self.current_lexer += char
+        end = Token("EOF", self.start_line_lexer, self.start_column_lexer)
+        self.tokens.append(end)
 
     def process_current_lexer(self):
         if self.current_lexer == "":
@@ -221,6 +224,375 @@ class LexicalError:
     def __str__(self):
         return "Error lexico (linea: " + str(self.line) + ", posicion: " + str(self.column) + ")"
 
+simbols = {"tk_mas":"+","tk_menos":"-","tk_mult":"*","tk_div":"=","tk_mod":"%","tk_asig":"=","tk_menor":"<","tk_mayor":"+>",
+           "tk_menor_igual":"<=","tk_mayor_igual":">=","tk_igual":"==","tk_y":"&&","tk_o":"||","tk_dif":"!=","tk_neg":"!",
+           "tk_dosp":":", "tk_pyc":";", "tk_coma":",", "tk_punto":".", "tk_par_izq":"(", "tk_par_der":")", "id":"identificador",
+           "tk_entero":"valor_entero", "tk_real":"valor_real", "tk_caracter":"valor_caracter", "tk_cadena":"valor_cadena"}
+
+order = {"tk_mas": 1,"tk_menos": 2, "tk_mult": 3,"tk_div":4, "tk_mod":5, "tk_asig":6, "tk_menor":7, "tk_mayor":8,
+         "tk_menor_igual":9,"tk_mayor_igual":10,"tk_igual":11,"tk_y":12,"tk_o":13,"tk_dif":14,"tk_neg":15,
+         "tk_dosp":16, "tk_pyc":17, "tk_coma":18, "tk_punto":19, "tk_par_izq":20, "tk_par_der":21, "id":22,
+         "tk_entero":23, "tk_real":24, "tk_caracter":25, "tk_cadena":26, "funcion_principal": 27, "fin_principal": 28,
+         "funcion": 53,
+         "leer": 29, "imprimir": 30, "booleano": 31, "caracter":32, "entero":33,  "real": 34, "cadena": 35, "si": 36,
+         "entonces": 37, "fin_si": 38, "si_no": 39, "mientras": 40, "hacer": 41, "fin_mientras": 41, "para": 42,
+         "fin_para": 43, "retornar": 55, "estructura": 50,"fin_estructura": 52,
+         "seleccionar": 44, "entre": 45, "caso": 46, "romper": 47,"defecto": 48,
+         "fin_seleccionar": 49, "verdadero": 57, "falso": 56, "fin_funcion": 54, "EOF":58}
+
+
+class SyntacticalError:
+    def __init__(self, token, expected_tokens):
+        self.line = token.line
+        self.column = token.column
+        self.token = token.token
+        self.lexer = token.lexer
+        self.expected_tokens = sorted(expected_tokens, key = lambda tk: order[tk],reverse = False)
+        for i in range(len(expected_tokens)):
+            if self.expected_tokens[i] in simbols.keys():
+                self.expected_tokens[i] = "\"" + simbols[self.expected_tokens[i]] + "\""
+            else:
+                self.expected_tokens[i] = "\"" + self.expected_tokens[i] + "\""
+
+        if self.token in simbols.keys():
+            self.token = "\""+simbols[self.token]+"\""
+        else:
+            self.token = "\""+self.token+"\""
+
+    def __str__(self):
+
+        return "<"+ str(self.line)+","+str(self.column)+"> Error Sintactico: se encontro "+ (self.lexer if self.lexer != "" else self.token)+\
+                " se esperaba: "+ ','.join(self.expected_tokens)
+
+
+class SyntacticalAnalyser:
+
+    def __init__(self, lexical):
+        self.tokens = lexical.tokens
+        self.index = 0
+        self.current_token = self.tokens[self.index]
+        self.funcion_principal = False
+
+    def next_token(self):
+        self.index += 1
+        self.current_token = self.tokens[self.index]
+        return self.current_token
+
+    def match(self, token):
+        if not token == self.current_token.token:
+            raise SyntacticalError(self.current_token, [token])
+        else:
+            self.next_token()
+
+    def program(self):
+        if self.current_token.token in ["estructura", "funcion", "funcion_principal"]:
+            self.element()
+            self.program()
+        elif self.current_token.token in ["EOF"]:
+            if not self.funcion_principal:
+                print "Error sintactico: falta funcion_principal"
+            else:
+                print "El analisis sintactico ha finalizado exitosamente."
+
+    def element(self):
+        if self.current_token.token in ["funcion"]:
+            self.match("funcion")
+            self.type_var()
+            self.match("id")
+            self.match("tk_par_izq")
+            self.params()
+            self.match("tk_par_der")
+            self.match("hacer")
+            self.cmp_declaration()
+            self.match("fin_funcion")
+        elif self.current_token.token in ["funcion_principal"]:
+            self.funcion_principal = True
+            self.match("funcion_principal")
+            self.cmp_declaration()
+            self.match("fin_principal")
+        elif self.current_token.token in ["estructura"]:
+            self.match("estructura")
+            self.match("id")
+            self.cmp_declaration()
+            self.match("fin_estructura")
+        else:
+            raise SyntacticalError(self.current_token, ["funcion", "funcion_principal", "estructura"])
+
+    def params(self):
+        if self.current_token.token in ["entero","real","booleano", "caracter", "cadena"]:
+            self.mandatory_params()
+        else:
+            raise SyntacticalError(self.current_token, ["entero","real","booleano", "caracter", "cadena"])
+
+
+    def mandatory_params(self):
+        if self.current_token.token in ["entero","real","booleano", "caracter", "cadena"]:
+            self.type_var()
+            self.match("id")
+            self.mandatory_params_pri()
+        else:
+            raise SyntacticalError(self.current_token, ["entero","real","booleano", "caracter", "cadena"])
+
+    def mandatory_params_pri(self):
+        if self.current_token.token in ["tk_coma"]:
+            self.match("tk_coma")
+            self.mandatory_params()
+
+    def dSyn(self):
+        if self.current_token.token in ["id"]:
+            self.match("id")
+            self.dSyn_special()
+        elif self.current_token.token in ["entero","real","booleano", "caracter", "cadena"]:
+            self.type_var()
+            self.match("id")
+            self.dSyn_pri()
+        else:
+            raise SyntacticalError(self.current_token, ["id","entero","real","booleano", "caracter", "cadena"])
+
+    def dSyn_special(self):
+        if self.current_token.token in ["id"]:
+            self.match("id")
+            self.dSyn_pri()
+        elif self.current_token.token in ["tk_asig"]:
+            self.match("tk_asig")
+            self.exp()
+        elif self.current_token.token in ["tk_par_izq"]:
+            self.match("tk_par_izq")
+            self.args_fun()
+            self.match("tk_par_der")
+        else:
+            raise SyntacticalError(self.current_token, ["id","entero","real","booleano", "caracter", "cadena"])
+
+
+    def dSyn_pri(self):
+        if self.current_token.token in ["tk_asig"]:
+            self.match("tk_asig")
+            self.exp()
+            self.dSyn_pri_pri()
+        if self.current_token.token in ["tk_coma"]:
+            self.dSyn_pri_pri()
+        #else:
+            #raise SyntacticalError(self.current_token, ["tk_asig"])
+
+    def dSyn_pri_pri(self):
+        if self.current_token.token in ["tk_coma"]:
+            self.match("tk_coma")
+            self.match("id")
+            self.dSyn_id()
+
+
+    def dSyn_id(self):
+        if self.current_token.token in ["tk_asig"]:
+            self.match("tk_asig")
+            self.exp()
+            self.dSyn_pri_pri()
+        if self.current_token.token in ["tk_coma"]:
+            self.dSyn_pri_pri()
+
+
+    def args_fun(self):
+        if self.current_token.token in ["id", "tk_par_izq" ,"tk_entero" ,"tk_real" ,"tk_caracter" ,"tk_cadena",
+                                        "verdadero", "falso"]:
+            self.exp()
+            self.args_fun_pri()
+
+    def args_fun_pri(self):
+        if self.current_token.token in ["tk_coma"]:
+            self.match("tk_coma")
+            self.exp()
+            self.args_fun_pri()
+
+    def type_var(self):
+        if self.current_token.token in ["entero"]:
+            self.match("entero")
+        elif self.current_token.token in ["real"]:
+            self.match("real")
+        elif self.current_token.token in ["booleano"]:
+            self.match("booleano")
+        elif self.current_token.token in ["caracter"]:
+            self.match("caracter")
+        elif self.current_token.token in ["cadena"]:
+            self.match("cadena")
+        else:
+            raise SyntacticalError(self.current_token, ["entero","real","booleano", "caracter", "cadena"])
+
+    def declaration(self):
+        if self.current_token.token in ["id", "entero","real","booleano", "caracter", "cadena"]:
+            self.dSyn()
+            self.match("tk_pyc")
+        elif self.current_token.token in ["si"]:
+            self.match("si")
+            self.match("tk_par_izq")
+            self.exp()
+            self.match("tk_par_der")
+            self.match("entonces")
+            self.cmp_declaration()
+            self.declaration_if_pri()
+        elif self.current_token.token in ["leer"]:
+            self.match("leer")
+            self.match("tk_par_izq")
+            self.match("id")
+            self.match("tk_par_der")
+            self.match("tk_pyc")
+        elif self.current_token.token in ["imprimir"]:
+            self.match("imprimir")
+            self.match("tk_par_izq")
+            self.str_struct()
+            self.match("tk_par_der")
+            self.match("tk_pyc")
+        elif self.current_token.token in ["mientras"]:
+            self.match("mientras")
+            self.match("tk_par_izq")
+            self.exp()
+            self.match("tk_par_der")
+            self.match("hacer")
+            self.cmp_declaration()
+            self.match("fin_mientras")
+        elif self.current_token.token in ["para"]:
+            self.match("para")
+            self.match("tk_par_izq")
+            self.dSyn()
+            self.match("tk_pyc")
+            self.exp()
+            self.match("tk_pyc")
+            self.end_loop()
+            self.match("tk_par_der")
+            self.match("hacer")
+            self.cmp_declaration()
+            self.match("fin_para")
+        elif self.current_token.token in ["hacer"]:
+            self.match("hacer")
+            self.cmp_declaration()
+            self.match("mientras")
+            self.match("tk_par_izq")
+            self.exp()
+            self.match("tk_par_der")
+            self.match("tk_pyc")
+        elif self.current_token.token in ["seleccionar"]:
+            self.match("seleccionar")
+            self.match("tk_par_izq")
+            self.match("id")
+            self.match("tk_par_der")
+            self.match("entre")
+            self.case()
+            self.match("fin_seleccionar")
+        elif self.current_token.token in ["romper"]:
+            self.match("romper")
+            self.match("tk_pyc")
+        elif self.current_token.token in ["retornar"]:
+            self.match("retornar")
+            self.exp()
+            self.match("tk_pyc")
+        else:
+            raise SyntacticalError(self.current_token, ["romper", "seleccionar", "hacer", "para", "mientras", "imprimir",
+                                                        "leer", "si", "id", "entero","real","booleano", "caracter", "cadena","retornar"])
+
+    def declaration_if_pri(self):
+        if self.current_token.token in ["fin_si"]:
+            self.match("fin_si")
+        elif self.current_token.token in ["si_no"]:
+            self.match("si_no")
+            self.cmp_declaration()
+            self.match("fin_si")
+        else:
+            raise SyntacticalError(self.current_token, ["fin_si","si_no"])
+
+    def end_loop(self):
+        if self.current_token.token in ["id"]:
+            self.match("id")
+        elif self.current_token.token in ["tk_entero"]:
+            self.match("tk_entero")
+        elif self.current_token.token in ["tk_real"]:
+            self.match("tk_real")
+        else:
+            raise SyntacticalError(self.current_token, ["id","tk_entero","tk_real"])
+
+    def str_struct(self):
+        if self.current_token.token in ["id", "tk_par_izq" ,"tk_entero" ,"tk_real" ,"tk_caracter" ,"tk_cadena",
+                                        "verdadero", "falso"]:
+            self.exp()
+            self.str_struct_pri()
+        else:
+            raise SyntacticalError(self.current_token, ["id", "tk_par_izq" ,"tk_entero" ,"tk_real" ,"tk_caracter" ,
+                                                        "tk_cadena", "verdadero", "falso"])
+
+    def str_struct_pri(self):
+        if self.current_token.token in ["tk_coma"]:
+            self.match("tk_coma")
+            self.str_struct()
+        #elif self.current_token.token in ["tk_par_der"]:
+           #self.match("tk_par_der")
+
+
+    def case(self):
+        if self.current_token.token in ["caso"]:
+            self.match("caso")
+            self.terminal()
+            self.match("tk_dosp")
+            self.cmp_declaration()
+            self.case()
+        elif self.current_token.token in ["defecto"]:
+            self.match("defecto")
+            self.match("tk_dosp")
+            self.cmp_declaration()
+        else:
+            raise SyntacticalError(self.current_token, ["caso", "defecto"])
+
+    def cmp_declaration(self):
+        if self.current_token.token in ["id", "entero","real","booleano", "caracter", "cadena","si","leer","imprimir",
+                                        "para", "hacer", "mientras", "seleccionar", "romper","retornar"]:
+            self.declaration()
+            self.cmp_declaration()
+        if self.current_token.token in ["fin_principal"]:
+            return
+        else:
+             raise SyntacticalError(self.current_token, ["fin_principal","id", "entero","real","booleano", "caracter", "cadena","si","leer","imprimir",
+                                        "para", "hacer", "mientras", "seleccionar", "romper","retornar"])
+        #elif self.current_token.token in ["fin_si","si_no","fin_mientras", "fin_para", "mientras", "caso", "defecto",
+         #                                 "fin_seleccionar","fin_funcion","fin_principal","fin_estructura"]:
+            #self.match(self.current_token.token)
+
+    def exp(self):
+        if self.current_token.token in ["id","tk_entero" ,"tk_real" ,"tk_caracter" ,"tk_cadena", "verdadero", "falso"]:
+            self.terminal()
+            self.exp_pri()
+        elif self.current_token.token in ["tk_par_izq"]:
+            self.match("tk_par_izq")
+            self.exp()
+            self.match("tk_par_der")
+            self.exp_pri()
+        else:
+            raise SyntacticalError(self.current_token, ["id","tk_par_izq","tk_entero" ,"tk_real" ,"tk_caracter" ,
+                                                        "tk_cadena", "verdadero", "falso"])
+
+    def exp_pri(self):
+        if self.current_token.token in ["tk_mas", "tk_menos","tk_mult", "tk_div", "tk_mod", "tk_menor", "tk_mayor",
+                                        "tk_menor_igual", "tk_mayor_igual","tk_igual","tk_o","tk_dif", "tk_neg",
+                                        "tk_y"]:
+            self.match(self.current_token.token)
+            self.exp()
+            self.exp_pri()
+
+    def identifier(self):
+        if self.current_token.token in ["id"]:
+            self.match("id")
+            self.identifier_pri()
+        else:
+            raise SyntacticalError(self.current_token, ["id"])
+
+    def identifier_pri(self):
+        if self.current_token.token in ["tk_punto"]:
+            self.match("tk_punto")
+            self.identifier()
+
+    def terminal(self):
+        if self.current_token.token in ["id"]:
+            self.identifier()
+        elif self.current_token.token in ["id","tk_entero" ,"tk_real" ,"tk_caracter" ,"tk_cadena", "verdadero", "falso"]:
+            self.match(self.current_token.token)
+
+
+
 
 def read_file(file_name):
     lines = []
@@ -234,7 +606,7 @@ def read_file(file_name):
     return lines
 
 # Cambiar n para el numero y l para la letra de los casos de prueba
-n = 4
+n = 2
 l = "E"
 file_init = "./problemas_juez/L1"+l+"_2016_"+str(n)
 
@@ -247,6 +619,7 @@ proc_prog = ProcessProgram(program)
 a = DictionaryRegExp(proc_prog)
 a.get_tokens()
 tokens_list = a.tokens
+"""
 print "----------------SOLUCION----------------------------"
 out = read_file(file_init+".out")
 out[len(out)-1] = out[len(out)-1].replace("\n\n", "\n")
@@ -259,3 +632,12 @@ for i in range(len(tokens_list)):
         assert out[i] == tokens_list[i]
     except AssertionError:
         print ">>> Error " + tokens_list[i]+" != "+out[i]+" >>Linea "+str(i+1)
+
+"""
+print "------------------Sintactico----------------------------"
+
+sintactical = SyntacticalAnalyser(a)
+try:
+    sintactical.program()
+except SyntacticalError as Se:
+    print Se

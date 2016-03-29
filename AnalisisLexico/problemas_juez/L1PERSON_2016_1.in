@@ -1,7 +1,4 @@
-/* esto no debe
-   importar, pero cuenta las lineas
-*/
-funcion entero sum(entero a, entero b) hacer
-    retornar a + 1.0.5;
-    // fin
-fin_funcion
+funcion_principal
+    entero a1 = 5*3;
+    imprimir(a1/10);
+//comentario final
