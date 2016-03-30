@@ -1,4 +1,4 @@
-//Estructura
+/*Estructura
 //Conceptos Basicos
 
 estructura Fecha
@@ -65,16 +65,14 @@ funcion Estudiante capturar(Estudiante estudiante) hacer
   imprimir("digite el dia de ingreso a la Universidad ");
   leer(estudiante.fingreso.dd);
   imprimir("digite el mes de ingreso a la Universidad  ");
-  leer(estudiante.fingreso.mm)
+  leer(estudiante.fingreso.mm);
   imprimir("digite el ako de ingreso a la Universidad  ");
   leer(estudiante.fingreso.aa);
   retornar estudiante;
 fin_funcion
+*/
 
-funcion mostrar(Estudiante estudiante) hacer
-  entero i;
-  imprimir("");
-  imprimir("Cedula  ", estudiante.cedula);
+funcion Hola mostrar(Estudiante estudiante) hacer
   imprimir("Nombre  ", estudiante.nombre,"");
   para (i=0; i<3; 1) hacer
     imprimir("Nota ",estudiante.nota, " ");

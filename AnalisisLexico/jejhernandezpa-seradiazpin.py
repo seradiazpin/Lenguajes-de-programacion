@@ -293,10 +293,38 @@ class SyntacticalAnalyser:
                 print "Error sintactico: falta funcion_principal"
             else:
                 print "El analisis sintactico ha finalizado exitosamente."
+        else:
+            raise SyntacticalError(self.current_token, ["estructura", "funcion", "funcion_principal"])
 
     def element(self):
+        err_token = ["fin_principal","id", "entero","real","booleano", "caracter", "cadena","si","leer","imprimir",
+                                        "para", "hacer", "mientras", "seleccionar", "romper","retornar"]
         if self.current_token.token in ["funcion"]:
             self.match("funcion")
+            self.element_pri(err_token)
+        elif self.current_token.token in ["funcion_principal"]:
+            self.funcion_principal = True
+            self.match("funcion_principal")
+            self.cmp_declaration()
+            try:
+                self.match("fin_principal")
+            except SyntacticalError:
+                err_token.append("fin_principal")
+                raise SyntacticalError(self.current_token, err_token)
+        elif self.current_token.token in ["estructura"]:
+            self.match("estructura")
+            self.match("id")
+            self.cmp_declaration()
+            try:
+                self.match("fin_estructura")
+            except SyntacticalError:
+                err_token.append("fin_estructura")
+                raise SyntacticalError(self.current_token, err_token)
+        else:
+            raise SyntacticalError(self.current_token, ["funcion", "funcion_principal", "estructura"])
+
+    def element_pri(self, err_token):
+        if self.current_token.token in ["entero","real","booleano", "caracter", "cadena"]:
             self.type_var()
             self.match("id")
             self.match("tk_par_izq")
@@ -304,25 +332,33 @@ class SyntacticalAnalyser:
             self.match("tk_par_der")
             self.match("hacer")
             self.cmp_declaration()
-            self.match("fin_funcion")
-        elif self.current_token.token in ["funcion_principal"]:
-            self.funcion_principal = True
-            self.match("funcion_principal")
-            self.cmp_declaration()
-            self.match("fin_principal")
-        elif self.current_token.token in ["estructura"]:
-            self.match("estructura")
+            try:
+                self.match("fin_funcion")
+            except SyntacticalError:
+                err_token.append("fin_funcion")
+                raise SyntacticalError(self.current_token, err_token)
+        elif self.current_token.token in ["id"]:
             self.match("id")
+            self.match("id")
+            self.match("tk_par_izq")
+            self.params()
+            self.match("tk_par_der")
+            self.match("hacer")
             self.cmp_declaration()
-            self.match("fin_estructura")
+            try:
+                self.match("fin_funcion")
+            except SyntacticalError:
+                err_token.append("fin_funcion")
+                raise SyntacticalError(self.current_token, err_token)
         else:
-            raise SyntacticalError(self.current_token, ["funcion", "funcion_principal", "estructura"])
+            raise SyntacticalError(self.current_token, ["entero","real","booleano", "caracter", "cadena", "id"])
+
 
     def params(self):
-        if self.current_token.token in ["entero","real","booleano", "caracter", "cadena"]:
+        if self.current_token.token in ["entero","real","booleano", "caracter", "cadena","id"]:
             self.mandatory_params()
-        else:
-            raise SyntacticalError(self.current_token, ["entero","real","booleano", "caracter", "cadena"])
+        #else:
+            #raise SyntacticalError(self.current_token, ["entero","real","booleano", "caracter", "cadena"])
 
 
     def mandatory_params(self):
@@ -330,8 +366,12 @@ class SyntacticalAnalyser:
             self.type_var()
             self.match("id")
             self.mandatory_params_pri()
+        elif self.current_token.token in ["id"]:
+            self.match("id")
+            self.match("id")
+            self.mandatory_params_pri()
         else:
-            raise SyntacticalError(self.current_token, ["entero","real","booleano", "caracter", "cadena"])
+            raise SyntacticalError(self.current_token, ["entero","real","booleano", "caracter", "cadena","id"])
 
     def mandatory_params_pri(self):
         if self.current_token.token in ["tk_coma"]:
@@ -340,14 +380,25 @@ class SyntacticalAnalyser:
 
     def dSyn(self):
         if self.current_token.token in ["id"]:
-            self.match("id")
-            self.dSyn_special()
+            self.identifier_id()
+            self.dSyn_fun()
         elif self.current_token.token in ["entero","real","booleano", "caracter", "cadena"]:
             self.type_var()
             self.match("id")
             self.dSyn_pri()
         else:
             raise SyntacticalError(self.current_token, ["id","entero","real","booleano", "caracter", "cadena"])
+
+    def dSyn_fun(self):
+        if self.current_token.token in ["id","tk_asig"]:
+            self.dSyn_special()
+        elif self.current_token.token in ["tk_par_izq"]:
+            self.match("tk_par_izq")
+            self.args_fun()
+            self.match("tk_par_der")
+        else:
+            raise SyntacticalError(self.current_token, ["id","entero","real","booleano", "caracter", "cadena"])
+
 
     def dSyn_special(self):
         if self.current_token.token in ["id"]:
@@ -356,12 +407,8 @@ class SyntacticalAnalyser:
         elif self.current_token.token in ["tk_asig"]:
             self.match("tk_asig")
             self.exp()
-        elif self.current_token.token in ["tk_par_izq"]:
-            self.match("tk_par_izq")
-            self.args_fun()
-            self.match("tk_par_der")
         else:
-            raise SyntacticalError(self.current_token, ["id","entero","real","booleano", "caracter", "cadena"])
+            raise SyntacticalError(self.current_token, ["id","tk_asig"])
 
 
     def dSyn_pri(self):
@@ -431,7 +478,7 @@ class SyntacticalAnalyser:
         elif self.current_token.token in ["leer"]:
             self.match("leer")
             self.match("tk_par_izq")
-            self.match("id")
+            self.identifier_id()
             self.match("tk_par_der")
             self.match("tk_pyc")
         elif self.current_token.token in ["imprimir"]:
@@ -462,7 +509,7 @@ class SyntacticalAnalyser:
             self.match("fin_para")
         elif self.current_token.token in ["hacer"]:
             self.match("hacer")
-            self.cmp_declaration()
+            self.cmp_declaration(True)
             self.match("mientras")
             self.match("tk_par_izq")
             self.exp()
@@ -471,7 +518,7 @@ class SyntacticalAnalyser:
         elif self.current_token.token in ["seleccionar"]:
             self.match("seleccionar")
             self.match("tk_par_izq")
-            self.match("id")
+            self.identifier()
             self.match("tk_par_der")
             self.match("entre")
             self.case()
@@ -538,16 +585,16 @@ class SyntacticalAnalyser:
         else:
             raise SyntacticalError(self.current_token, ["caso", "defecto"])
 
-    def cmp_declaration(self):
+    def cmp_declaration(self,dowhile = False):
         if self.current_token.token in ["id", "entero","real","booleano", "caracter", "cadena","si","leer","imprimir",
                                         "para", "hacer", "mientras", "seleccionar", "romper","retornar"]:
+            if dowhile and self.current_token.token == "mientras":
+                return
             self.declaration()
-            self.cmp_declaration()
+            self.cmp_declaration(dowhile)
         if self.current_token.token in ["fin_principal"]:
             return
-        else:
-             raise SyntacticalError(self.current_token, ["fin_principal","id", "entero","real","booleano", "caracter", "cadena","si","leer","imprimir",
-                                        "para", "hacer", "mientras", "seleccionar", "romper","retornar"])
+
         #elif self.current_token.token in ["fin_si","si_no","fin_mientras", "fin_para", "mientras", "caso", "defecto",
          #                                 "fin_seleccionar","fin_funcion","fin_principal","fin_estructura"]:
             #self.match(self.current_token.token)
@@ -576,14 +623,40 @@ class SyntacticalAnalyser:
     def identifier(self):
         if self.current_token.token in ["id"]:
             self.match("id")
-            self.identifier_pri()
+            self.identifier_fun()
         else:
             raise SyntacticalError(self.current_token, ["id"])
+
+    def identifier_id(self):
+        if self.current_token.token in ["id"]:
+            self.match("id")
+            self.identifier_id_pri()
+        else:
+            raise SyntacticalError(self.current_token, ["id"])
+
+    def identifier_fun(self):
+        if self.current_token.token in ["tk_mas", "tk_menos","tk_mult", "tk_div", "tk_mod", "tk_menor", "tk_mayor",
+                                        "tk_menor_igual", "tk_mayor_igual","tk_igual","tk_o","tk_dif", "tk_neg",
+                                        "tk_y","tk_punto","tk_par_der","tk_pyc"]:
+            self.identifier_pri()
+        elif self.current_token.token in ["tk_par_izq"]:
+            self.match("tk_par_izq")
+            self.args_fun()
+            self.match("tk_par_der")
+        else:
+            raise SyntacticalError(self.current_token, ["tk_mas", "tk_menos","tk_mult", "tk_div", "tk_mod", "tk_menor", "tk_mayor",
+                                        "tk_menor_igual", "tk_mayor_igual","tk_igual","tk_o","tk_dif", "tk_neg",
+                                        "tk_y","tk_punto","tk_par_izq","tk_par_der"])
 
     def identifier_pri(self):
         if self.current_token.token in ["tk_punto"]:
             self.match("tk_punto")
             self.identifier()
+
+    def identifier_id_pri(self):
+        if self.current_token.token in ["tk_punto"]:
+            self.match("tk_punto")
+            self.identifier_id()
 
     def terminal(self):
         if self.current_token.token in ["id"]:
@@ -606,8 +679,8 @@ def read_file(file_name):
     return lines
 
 # Cambiar n para el numero y l para la letra de los casos de prueba
-n = 2
-l = "E"
+n = 5
+l = "D"
 file_init = "./problemas_juez/L1"+l+"_2016_"+str(n)
 
 program = []
@@ -637,7 +710,6 @@ for i in range(len(tokens_list)):
 print "------------------Sintactico----------------------------"
 
 sintactical = SyntacticalAnalyser(a)
-try:
-    sintactical.program()
-except SyntacticalError as Se:
-    print Se
+
+sintactical.program()
+
