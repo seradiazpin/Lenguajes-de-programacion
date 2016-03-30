@@ -1,4 +1,11 @@
-funcion_principal
-    entero a1 = 5*3;
-    imprimir(a1/10);
-//comentario final
+estructura Point
+
+entero x;
+
+entero y;
+
+real a,b,c;
+
+C c;
+
+fin_estructura

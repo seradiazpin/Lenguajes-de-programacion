@@ -635,18 +635,16 @@ class SyntacticalAnalyser:
             raise SyntacticalError(self.current_token, ["id"])
 
     def identifier_fun(self):
-        if self.current_token.token in ["tk_mas", "tk_menos","tk_mult", "tk_div", "tk_mod", "tk_menor", "tk_mayor",
-                                        "tk_menor_igual", "tk_mayor_igual","tk_igual","tk_o","tk_dif", "tk_neg",
-                                        "tk_y","tk_punto","tk_par_der","tk_pyc"]:
+        if self.current_token.token in ["tk_punto"]:
             self.identifier_pri()
         elif self.current_token.token in ["tk_par_izq"]:
             self.match("tk_par_izq")
             self.args_fun()
             self.match("tk_par_der")
-        else:
-            raise SyntacticalError(self.current_token, ["tk_mas", "tk_menos","tk_mult", "tk_div", "tk_mod", "tk_menor", "tk_mayor",
-                                        "tk_menor_igual", "tk_mayor_igual","tk_igual","tk_o","tk_dif", "tk_neg",
-                                        "tk_y","tk_punto","tk_par_izq","tk_par_der"])
+        #else:
+            #raise SyntacticalError(self.current_token, ["tk_mas", "tk_menos","tk_mult", "tk_div", "tk_mod", "tk_menor", "tk_mayor",
+                                        #"tk_menor_igual", "tk_mayor_igual","tk_igual","tk_o","tk_dif", "tk_neg",
+                                        #"tk_y","tk_punto","tk_par_izq","tk_par_der"])
 
     def identifier_pri(self):
         if self.current_token.token in ["tk_punto"]:
@@ -679,8 +677,8 @@ def read_file(file_name):
     return lines
 
 # Cambiar n para el numero y l para la letra de los casos de prueba
-n = 5
-l = "D"
+n = 1
+l = "PERSON"
 file_init = "./problemas_juez/L1"+l+"_2016_"+str(n)
 
 program = []

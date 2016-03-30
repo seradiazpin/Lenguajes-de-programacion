@@ -1,4 +1,4 @@
-/*Estructura
+//Estructura
 //Conceptos Basicos
 
 estructura Fecha
@@ -70,7 +70,7 @@ funcion Estudiante capturar(Estudiante estudiante) hacer
   leer(estudiante.fingreso.aa);
   retornar estudiante;
 fin_funcion
-*/
+
 
 funcion Hola mostrar(Estudiante estudiante) hacer
   imprimir("Nombre  ", estudiante.nombre,"");
