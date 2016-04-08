@@ -1,5 +1,8 @@
 import re
+import sys
 
+# Sergio Alejandro Diaz Pinilla - Jefferson Javier Hernandez Panqueba
+# Se soluciono haciendo la gramatica y implementando un analizador sintactico desendente
 # Transformations
 
 transformations = {">=": "? ", "<=": "@ ", "==": "$ ", "!=": "\\ ", "&&": "& ", "||": "| ",
@@ -261,8 +264,8 @@ class SyntacticalError:
 
     def __str__(self):
 
-        return "<"+ str(self.line)+","+str(self.column)+"> Error Sintactico: se encontro "+ (self.lexer if self.lexer != "" else self.token)+\
-                " se esperaba: "+ ','.join(self.expected_tokens)
+        return "<"+ str(self.line)+","+str(self.column)+"> Error sintactico: se encontro: "+ ("\""+self.lexer+"\"" if self.lexer != "" else self.token)+\
+                "; se esperaba: "+ ', '.join(self.expected_tokens)+"."
 
 
 class SyntacticalAnalyser:
@@ -439,7 +442,7 @@ class SyntacticalAnalyser:
 
     def args_fun(self):
         if self.current_token.token in ["id", "tk_par_izq" ,"tk_entero" ,"tk_real" ,"tk_caracter" ,"tk_cadena",
-                                        "verdadero", "falso"]:
+                                        "verdadero", "falso","tk_neg"]:
             self.exp()
             self.args_fun_pri()
 
@@ -478,7 +481,7 @@ class SyntacticalAnalyser:
         elif self.current_token.token in ["leer"]:
             self.match("leer")
             self.match("tk_par_izq")
-            self.identifier_id()
+            self.leer_id()
             self.match("tk_par_der")
             self.match("tk_pyc")
         elif self.current_token.token in ["imprimir"]:
@@ -534,6 +537,21 @@ class SyntacticalAnalyser:
             raise SyntacticalError(self.current_token, ["romper", "seleccionar", "hacer", "para", "mientras", "imprimir",
                                                         "leer", "si", "id", "entero","real","booleano", "caracter", "cadena","retornar"])
 
+    def leer_id(self):
+        if self.current_token.token in ["id"]:
+            self.match("id")
+            while self.current_token.token != "tk_par_der":
+                try:
+                    self.match("tk_punto")
+                except SyntacticalError:
+                    raise SyntacticalError(self.current_token, ["tk_punto","tk_par_der"])
+                try:
+                    self.match("id")
+                except SyntacticalError:
+                    raise SyntacticalError(self.current_token, ["id"])
+        else:
+            raise SyntacticalError(self.current_token, ["id"])
+
     def declaration_if_pri(self):
         if self.current_token.token in ["fin_si"]:
             self.match("fin_si")
@@ -556,12 +574,12 @@ class SyntacticalAnalyser:
 
     def str_struct(self):
         if self.current_token.token in ["id", "tk_par_izq" ,"tk_entero" ,"tk_real" ,"tk_caracter" ,"tk_cadena",
-                                        "verdadero", "falso"]:
+                                        "verdadero", "falso","tk_neg"]:
             self.exp()
             self.str_struct_pri()
         else:
             raise SyntacticalError(self.current_token, ["id", "tk_par_izq" ,"tk_entero" ,"tk_real" ,"tk_caracter" ,
-                                                        "tk_cadena", "verdadero", "falso"])
+                                                        "tk_cadena", "verdadero", "falso","tk_neg"])
 
     def str_struct_pri(self):
         if self.current_token.token in ["tk_coma"]:
@@ -582,8 +600,7 @@ class SyntacticalAnalyser:
             self.match("defecto")
             self.match("tk_dosp")
             self.cmp_declaration()
-        else:
-            raise SyntacticalError(self.current_token, ["caso", "defecto"])
+
 
     def cmp_declaration(self,dowhile = False):
         if self.current_token.token in ["id", "entero","real","booleano", "caracter", "cadena","si","leer","imprimir",
@@ -608,9 +625,12 @@ class SyntacticalAnalyser:
             self.exp()
             self.match("tk_par_der")
             self.exp_pri()
+        elif self.current_token.token in ["tk_neg"]:
+            self.match("tk_neg")
+            self.exp()
         else:
             raise SyntacticalError(self.current_token, ["id","tk_par_izq","tk_entero" ,"tk_real" ,"tk_caracter" ,
-                                                        "tk_cadena", "verdadero", "falso"])
+                                                        "tk_cadena", "verdadero", "falso","tk_neg"])
 
     def exp_pri(self):
         if self.current_token.token in ["tk_mas", "tk_menos","tk_mult", "tk_div", "tk_mod", "tk_menor", "tk_mayor",
@@ -663,51 +683,22 @@ class SyntacticalAnalyser:
             self.match(self.current_token.token)
 
 
+program = sys.stdin.readlines()
 
-
-def read_file(file_name):
-    lines = []
-    file_data = open(file_name, "r")
-    for line in file_data:
-        lines.append(line)
-    lines[len(lines)-1] += "\n"
-
-    for i in range(len(lines)):
-        lines[i] = lines[i].replace("\r", "")
-    return lines
-
-# Cambiar n para el numero y l para la letra de los casos de prueba
-n = 1
-l = "PERSON"
-file_init = "./problemas_juez/L1"+l+"_2016_"+str(n)
-
-program = []
-
-program = read_file(file_init+".in")
+program[len(program)-1] = program[len(program)-1]+"\n"
+program.append("\n")
+for i in range(len(program)):
+    program[i] = program[i].replace("\r","")
 
 transform(program)
 proc_prog = ProcessProgram(program)
 a = DictionaryRegExp(proc_prog)
 a.get_tokens()
 tokens_list = a.tokens
-"""
-print "----------------SOLUCION----------------------------"
-out = read_file(file_init+".out")
-out[len(out)-1] = out[len(out)-1].replace("\n\n", "\n")
-# print "".join(out)
-
-print "----------------Assert----------------------------"
-
-for i in range(len(tokens_list)):
-    try:
-        assert out[i] == tokens_list[i]
-    except AssertionError:
-        print ">>> Error " + tokens_list[i]+" != "+out[i]+" >>Linea "+str(i+1)
-
-"""
-print "------------------Sintactico----------------------------"
 
 sintactical = SyntacticalAnalyser(a)
-
-sintactical.program()
+try:
+    sintactical.program()
+except SyntacticalError as Se:
+    print Se
 

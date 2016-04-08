@@ -1,11 +1,7 @@
-estructura Point
-
-entero x;
-
-entero y;
-
-real a,b,c;
-
-C c;
-
-fin_estructura
+/* esto no debe
+   importar, pero cuenta las lineas
+*/
+funcion entero sum(entero a, entero b) hacer
+    retornar a + 1.0.5;
+    // fin
+fin_funcion
